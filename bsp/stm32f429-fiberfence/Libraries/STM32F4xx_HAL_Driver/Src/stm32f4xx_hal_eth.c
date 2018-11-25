@@ -299,6 +299,12 @@ HAL_StatusTypeDef HAL_ETH_Init(ETH_HandleTypeDef *heth)
   {
     /* Get tick */
     tickstart = HAL_GetTick();
+		
+		HAL_ETH_ReadPHYRegister(heth, 0, &phyreg);
+		HAL_ETH_ReadPHYRegister(heth, 1, &phyreg);
+		HAL_ETH_ReadPHYRegister(heth, 2, &phyreg);
+		HAL_ETH_ReadPHYRegister(heth, 3, &phyreg);
+		HAL_ETH_ReadPHYRegister(heth, 4, &phyreg);
     
     /* We wait for linked status */
     do
@@ -367,44 +373,44 @@ HAL_StatusTypeDef HAL_ETH_Init(ETH_HandleTypeDef *heth)
       
     } while (((phyreg & PHY_AUTONEGO_COMPLETE) != PHY_AUTONEGO_COMPLETE));
     
-    /* Read the result of the auto-negotiation */
-    if((HAL_ETH_ReadPHYRegister(heth, PHY_SR, &phyreg)) != HAL_OK)
-    {
-      /* In case of write timeout */
-      err = ETH_ERROR;
-      
-      /* Config MAC and DMA */
-      ETH_MACDMAConfig(heth, err);
-      
-      /* Set the ETH peripheral state to READY */
-      heth->State = HAL_ETH_STATE_READY;
-      
-      /* Return HAL_ERROR */
-      return HAL_ERROR;   
-    }
-    
-    /* Configure the MAC with the Duplex Mode fixed by the auto-negotiation process */
-    if((phyreg & PHY_DUPLEX_STATUS) != (uint32_t)RESET)
-    {
-      /* Set Ethernet duplex mode to Full-duplex following the auto-negotiation */
-      (heth->Init).DuplexMode = ETH_MODE_FULLDUPLEX;  
-    }
-    else
-    {
-      /* Set Ethernet duplex mode to Half-duplex following the auto-negotiation */
-      (heth->Init).DuplexMode = ETH_MODE_HALFDUPLEX;           
-    }
-    /* Configure the MAC with the speed fixed by the auto-negotiation process */
-    if((phyreg & PHY_SPEED_STATUS) == PHY_SPEED_STATUS)
-    {  
-      /* Set Ethernet speed to 10M following the auto-negotiation */
-      (heth->Init).Speed = ETH_SPEED_10M; 
-    }
-    else
-    {   
-      /* Set Ethernet speed to 100M following the auto-negotiation */ 
-      (heth->Init).Speed = ETH_SPEED_100M;
-    }
+//    /* Read the result of the auto-negotiation */
+//    if((HAL_ETH_ReadPHYRegister(heth, PHY_SR, &phyreg)) != HAL_OK)
+//    {
+//      /* In case of write timeout */
+//      err = ETH_ERROR;
+//      
+//      /* Config MAC and DMA */
+//      ETH_MACDMAConfig(heth, err);
+//      
+//      /* Set the ETH peripheral state to READY */
+//      heth->State = HAL_ETH_STATE_READY;
+//      
+//      /* Return HAL_ERROR */
+//      return HAL_ERROR;   
+//    }
+//    
+//    /* Configure the MAC with the Duplex Mode fixed by the auto-negotiation process */
+//    if((phyreg & PHY_DUPLEX_STATUS) != (uint32_t)RESET)
+//    {
+//      /* Set Ethernet duplex mode to Full-duplex following the auto-negotiation */
+//      (heth->Init).DuplexMode = ETH_MODE_FULLDUPLEX;  
+//    }
+//    else
+//    {
+//      /* Set Ethernet duplex mode to Half-duplex following the auto-negotiation */
+//      (heth->Init).DuplexMode = ETH_MODE_HALFDUPLEX;           
+//    }
+//    /* Configure the MAC with the speed fixed by the auto-negotiation process */
+//    if((phyreg & PHY_SPEED_STATUS) == PHY_SPEED_STATUS)
+//    {  
+//      /* Set Ethernet speed to 10M following the auto-negotiation */
+//      (heth->Init).Speed = ETH_SPEED_10M; 
+//    }
+//    else
+//    {   
+//      /* Set Ethernet speed to 100M following the auto-negotiation */ 
+//      (heth->Init).Speed = ETH_SPEED_100M;
+//    }
   }
   else /* AutoNegotiation Disable */
   {

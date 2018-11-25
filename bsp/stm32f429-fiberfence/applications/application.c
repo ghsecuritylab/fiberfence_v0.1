@@ -22,6 +22,10 @@
 #include "adc_timer.h"
 #include "displayInfo.h"
 #include "AD7924.h"
+#include "lcd.h"
+#include "key.h"
+#include "udp_demo.h"
+
 #ifdef RT_USING_DFS
 /* dfs init */
 
@@ -62,19 +66,22 @@ void rt_init_thread_entry(void* parameter)
 		TIM4_Init(65535-1, 90-1);
 		TIM3_Init(250-1, 90-1);
 		info_init();
+		lcd1602_init();
     
 #ifdef RT_USING_DFS   
+	dfs_init();
         
 #ifdef RT_USING_DFS_ELMFAT
+	elm_init();
     
     /* mount sd card fat partition 0 as root directory */
-    if (dfs_mount("W25Q256", "/spi", "elm", 0, 0) == 0)
+    if (dfs_mount("W25Q64", "/", "elm", 0, 0) == 0)
     {
-        rt_kprintf("spi flash mount to /spi !\n");
+        rt_kprintf("spi flash mount to / !\n");
     }
     else
     {
-        rt_kprintf("spi flash mount to /spi failed!\n");
+        rt_kprintf("spi flash mount to / failed!\n");
     }
     
     /* mount sd card fat partition 0 as root directory */
@@ -89,6 +96,8 @@ void rt_init_thread_entry(void* parameter)
 #endif /* RT_USING_DFS_ELMFAT */
         
 #endif /* DFS */
+		
+		udp_demo_test();
 		
 		while(1){
 			//adc_ReadOneSample(0x8310);
@@ -155,7 +164,7 @@ void rt_alarm_process_A_thread_entry(void* parameter)
 				if(value[i]>info.item1.param1 || value[i]<(2*2048-info.item1.param1))
 				{
 					HAL_GPIO_WritePin(GPIOG, LED12_Pin, GPIO_PIN_RESET);            //打开报警LED
-					HAL_GPIO_WritePin(CTRL_B_GPIO_Port, CTRL_B, GPIO_PIN_SET);      //输出报警开关量
+					//HAL_GPIO_WritePin(CTRL_B_GPIO_Port, CTRL_B, GPIO_PIN_SET);      //输出报警开关量
 					
 					info.item7.param1++;      //报警计数+1
 					if(info.item7.active)     //如果lcd当前显示报警计数，更新显示
@@ -166,6 +175,8 @@ void rt_alarm_process_A_thread_entry(void* parameter)
   				break;
 				}
 			}
+			
+			//rt_kprintf("adc1:%d\n", value[100]);
 		}
 		
 		//达到报警时间间隔，关闭报警
@@ -213,7 +224,7 @@ void rt_alarm_process_B_thread_entry(void* parameter)
 				if( (value[i]&0x0FFF)>info.item2.param1 || (value[i]&0x0FFF)<(2*2048-info.item2.param1))
 				{
 					HAL_GPIO_WritePin(GPIOG, LED7_Pin, GPIO_PIN_RESET);               //打开报警LED
-					HAL_GPIO_WritePin(CTRL_A_GPIO_Port, CTRL_A, GPIO_PIN_SET);        //输出报警开关量
+					//HAL_GPIO_WritePin(CTRL_A_GPIO_Port, CTRL_A, GPIO_PIN_SET);        //输出报警开关量
 					
 					info.item8.param1++;        //报警计数+1
 					if(info.item8.active)       //如果lcd当前显示报警计数，更新显示
@@ -224,6 +235,8 @@ void rt_alarm_process_B_thread_entry(void* parameter)
   				break;
 				}
 			}
+			
+			//rt_kprintf("adc2:%d\n", (value[i]&0x0FFF));
 		}
 		
 		//达到报警时间间隔，关闭报警

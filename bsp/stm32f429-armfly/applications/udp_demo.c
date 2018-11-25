@@ -2,7 +2,7 @@
 
 #include "usart.h"
 #include "lwip/api.h"
-#include "lwip/sys.h"
+#include "lwip/lwip_sys.h"
 //#include "lwip/ip4.h"
 #include "lwip/ip_addr.h"
 #include "string.h"
@@ -57,7 +57,7 @@ void udp_demo_test(void)
 	if(udpconn != NULL)  //创建UDP连接成功
 	{
 		err = netconn_bind(udpconn,IP_ADDR_ANY,UDP_DEMO_PORT); 
-		IP4_ADDR(&destipaddr,192,168, 103,82); //构造目的IP地址
+		IP4_ADDR(&destipaddr,192,168, 1,102); //构造目的IP地址
         netconn_connect(udpconn,&destipaddr,UDP_DEMO_PORT); 	//连接到远端主机
 		if(err == ERR_OK)//绑定完成
 		{

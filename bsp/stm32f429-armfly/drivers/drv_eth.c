@@ -389,7 +389,7 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
 	EthHandle.Init.MediaInterface = ETH_MEDIA_INTERFACE_RMII;
 	EthHandle.Init.RxMode = ETH_RXINTERRUPT_MODE;
 	EthHandle.Init.ChecksumMode = ETH_CHECKSUM_BY_SOFTWARE;
-    //EthHandle.Init.ChecksumMode = ETH_CHECKSUM_BY_HARDWARE;
+  //EthHandle.Init.ChecksumMode = ETH_CHECKSUM_BY_HARDWARE;
 	EthHandle.Init.PhyAddress = DM9161_PHY_ADDRESS;
 	
 	HAL_ETH_DeInit(&EthHandle);
@@ -420,8 +420,8 @@ static rt_err_t rt_stm32_eth_init(rt_device_t dev)
 		STM32_ETH_PRINTF("eth hardware start faild...\n");
     }
     
-    eth_phy_init();
-    eth_link_exit_config();
+    //eth_phy_init();
+    //eth_link_exit_config();
 
     return RT_EOK;
 }
