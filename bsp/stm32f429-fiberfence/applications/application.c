@@ -24,7 +24,12 @@
 #include "AD7924.h"
 #include "lcd.h"
 #include "key.h"
+#include "key_app.h"
 #include "udp_demo.h"
+
+#include <rtthread.h>
+#include <lwip/netdb.h>
+#include <lwip/sockets.h>
 
 #ifdef RT_USING_DFS
 /* dfs init */
@@ -43,17 +48,47 @@
 #include "drv_eth.h"
 #endif
 
-rt_thread_t tid, tid1, powerid, alarmid_A, alarmid_B;
+rt_thread_t tid, tid1, powerid, alarmid_A, alarmid_B, keyid;
 
-struct rt_mailbox mb_a, mb_b;
+struct rt_mailbox mb_a, mb_b, mb_udp;
 
-static char mb_a_pool[4], mb_b_pool[4];
+static char mb_a_pool[4], mb_b_pool[4], mb_udp_pool[4];
 
 //static char sd[3000];
 
 extern struct ADC_data adc_data_a;
 
 //extern rt_uint16_t adc_ReadOneSample(rt_uint16_t cmd);
+void udpinit(char *send_data)
+{
+    int sock, port=8089;
+    struct hostent *host;
+    struct sockaddr_in server_addr;
+
+    /* ????????url??host??(?????,??????) */
+    host = (struct hostent *) gethostbyname("192.168.1.102");
+
+    /* ????socket,???SOCK_DGRAM,UDP?? */
+    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+    {
+        rt_kprintf("Socket error\n");
+        return;
+    }
+
+    /* ???????????? */
+    server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    server_addr.sin_addr = *((struct in_addr *) host->h_addr);
+    rt_memset(&(server_addr.sin_zero), 0, sizeof(server_addr.sin_zero));
+
+		sendto(sock, send_data, 1000, 0,
+					 (struct sockaddr *) &server_addr, sizeof(struct sockaddr));
+
+		sendto(sock, send_data+1000, 1000, 0,
+					 (struct sockaddr *) &server_addr, sizeof(struct sockaddr));
+    lwip_close(sock);
+}
+
 
 void rt_init_thread_entry(void* parameter)
 {    
@@ -77,7 +112,7 @@ void rt_init_thread_entry(void* parameter)
     /* mount sd card fat partition 0 as root directory */
     if (dfs_mount("W25Q64", "/", "elm", 0, 0) == 0)
     {
-        rt_kprintf("spi flash mount to / !\n");
+        rt_kprintf("spi flash mount to / succesfull!\n");
     }
     else
     {
@@ -87,7 +122,7 @@ void rt_init_thread_entry(void* parameter)
     /* mount sd card fat partition 0 as root directory */
     if (dfs_mount("sd0", "/sdcard", "elm", 0, 0) == 0)
     {
-        rt_kprintf("sd card mount to /sdcard!\n");        
+        rt_kprintf("sd card mount to /sdcard succesfull!\n");        
     }
     else
     {
@@ -97,7 +132,7 @@ void rt_init_thread_entry(void* parameter)
         
 #endif /* DFS */
 		
-		udp_demo_test();
+		//udp_demo_test();
 		
 		while(1){
 			//adc_ReadOneSample(0x8310);
@@ -124,7 +159,10 @@ void rt_system_led_thread_entry(void* parameter)
 */
 void rt_optic_power_thread_entry(void* parameter)
 {
+	int i;
 	while(1){
+//		for(i=0;i<100;i++)
+				rt_kprintf("%d   %d\n",adc_data_a.dc1[10]&0x0fff, adc_data_a.dc2[10]&0x0fff);
 		if(adc_data_a.dc1[10]<info.item3.param1)
 			LED_PowerA = OFF;
 		else
@@ -146,6 +184,7 @@ void rt_alarm_process_A_thread_entry(void* parameter)
 {
 	int i, count=0;
 	rt_uint16_t *value;
+	rt_err_t error;
 
 	while(1)
 	{
@@ -188,6 +227,8 @@ void rt_alarm_process_A_thread_entry(void* parameter)
 		
 		//将数据打包发送到PC处理
 		send_data:
+			udpinit((char*)value);
+//			error = rt_mb_send(&mb_udp, (rt_uint32_t)value);
 //			for(i=0; i<1000; i++)
 //			{
 //				sd[i*3+0] = 0x55;               //添加校验码
@@ -197,7 +238,7 @@ void rt_alarm_process_A_thread_entry(void* parameter)
 //			HAL_UART_Transmit_DMA(&UART6_Handler, (uint8_t *)sd, 3000);   //通过dma方式将数据包发送到PC
 //			rt_thread_suspend(alarmid_B);                                 //线程挂起，等待传输完成（传输完成后中断回调函数自动激活线程）
 //			rt_schedule();
-			;
+			
 	}
 }
 
@@ -263,6 +304,55 @@ void rt_alarm_process_B_thread_entry(void* parameter)
 	
 }
 
+/*
+*******************按键处理**********************
+*/
+void rt_key_thread_entry(void* parameter)
+{	
+	int key_value;
+	
+	
+	while(1)
+	{
+		key_value = KEY_Scan(1);
+		switch(key_value)
+		{
+			case KEY0_PRES:                //back
+				key_back_perss();
+				rt_kprintf("KEY0_PRES\n");
+				break;
+			case KEY1_PRES:                //enter
+				LcdCommandWrite(0x01);  //
+				delay_ms(20000); 
+				LcdCommandWrite(0x80+3); 
+				delay_ms(100);
+				lcdStrWrite("hello world!");
+				delay_ms(100);
+				rt_kprintf("KEY1_PRES\n");
+				break;
+			case KEY2_PRES:                //sub
+				key_sub_press();
+				rt_kprintf("KEY2_PRES\n");
+				break;
+			case KEY3_PRES:                //add
+				key_plus_press();
+				rt_kprintf("KEY3_PRES\n");
+				break;
+			case KEY4_PRES:                //down
+				key_down_press();
+				rt_kprintf("KEY4_PRES\n");
+				break;
+			case KEY5_PRES:                //up
+				key_up_press();
+				rt_kprintf("KEY5_PRES\n");
+				break;
+			default:
+				break;	
+		}
+		rt_thread_delay(60);
+	}
+}
+
 int rt_application_init()
 {
 
@@ -276,6 +366,12 @@ int rt_application_init()
 								"mbt_b", /* name */
 								&mb_b_pool[0], /* mail mb_pool */
 								sizeof(mb_b_pool)/4, /*size*/
+								RT_IPC_FLAG_FIFO);
+								
+		rt_mb_init(&mb_udp,
+								"mbt_udp", /* name */
+								&mb_udp_pool[0], /* mail mb_pool */
+								sizeof(mb_udp_pool)/4, /*size*/
 								RT_IPC_FLAG_FIFO);
 	
     tid = rt_thread_create("init",
@@ -291,6 +387,13 @@ int rt_application_init()
 
     if (tid1 != RT_NULL)
         rt_thread_startup(tid1);
+		
+		keyid = rt_thread_create("key",
+        rt_key_thread_entry, RT_NULL,
+        2048, RT_THREAD_PRIORITY_MAX/3-3, 20);
+
+    if (keyid != RT_NULL)
+        rt_thread_startup(keyid);
 		
 		powerid = rt_thread_create("optic_power",
         rt_optic_power_thread_entry, RT_NULL,

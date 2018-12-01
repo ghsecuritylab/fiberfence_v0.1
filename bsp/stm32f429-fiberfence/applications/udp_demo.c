@@ -6,6 +6,7 @@
 //#include "lwip/ip4.h"
 #include "lwip/ip_addr.h"
 #include "string.h"
+#include "adc_timer.h"
 //////////////////////////////////////////////////////////////////////////////////	 
 //本程序只供学习使用，未经作者许可，不得用于其它任何用途
 //ALIENTEK STM32F4&F7开发板
@@ -25,9 +26,12 @@
 //TCP客户端任务
 #define UDP_PRIO		6
 //任务堆栈大小
-#define UDP_STK_SIZE	300
+#define UDP_STK_SIZE	5000
 
-char ADC_Value[4]={'a','b','c','d'};
+char ADC_Value[15000]={'0'};
+rt_uint16_t *value;
+extern struct rt_mailbox mb_udp;
+extern struct ADC_data adc_data_a, adc_data_b;
 
 u8 udp_flag;							//UDP数据发送标志位
 
@@ -52,17 +56,31 @@ void udp_demo_test(void)
 		{
 			while(1)
 			{
-					sentbuf = netbuf_new();
-					netbuf_alloc(sentbuf, 4);
-					memcpy(sentbuf->p->payload,(void*)ADC_Value,4);
-					
-					err = netconn_send(udpconn,sentbuf);  	//将netbuf中的数据发送出去
-					if(err != ERR_OK)
+					if (rt_mb_recv(&mb_udp, (rt_uint32_t*)&value, RT_WAITING_FOREVER)== RT_EOK)
 					{
-						rt_kprintf("发送失败\r\n");
-					}	
-					netbuf_delete(sentbuf);      	//删除buf
-					rt_thread_delay(1000);
+						sentbuf = netbuf_new();
+						netbuf_alloc(sentbuf, 2000);
+						memcpy(sentbuf->p->payload,(void*)ADC_Value, 2000);
+						
+						err = netconn_send(udpconn,sentbuf);  	//将netbuf中的数据发送出去
+						if(err != ERR_OK)
+						{
+							rt_kprintf("发送失败\r\n");
+						}	
+						netbuf_delete(sentbuf);      	//删除buf
+						
+//						sentbuf = netbuf_new();
+//						netbuf_alloc(sentbuf, 1000);
+//						memcpy(sentbuf->p->payload,(void*)(value+500), 1000);
+//						
+//						err = netconn_send(udpconn,sentbuf);  	//将netbuf中的数据发送出去
+//						if(err != ERR_OK)
+//						{
+//							rt_kprintf("发送失败\r\n");
+//						}	
+//						netbuf_delete(sentbuf);      	//删除buf
+						//rt_thread_delay(10);
+					}
 			}
 		}
 		else 

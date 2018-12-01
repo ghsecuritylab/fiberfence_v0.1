@@ -457,6 +457,11 @@
               <FileType>1</FileType>
               <FilePath>.\applications\udp_server.c</FilePath>
             </File>
+            <File>
+              <FileName>key_app.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\applications\key_app.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -580,11 +585,6 @@
               <FilePath>.\drivers\key.c</FilePath>
             </File>
             <File>
-              <FileName>lcd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\drivers\lcd.c</FilePath>
-            </File>
-            <File>
               <FileName>drv_eth.c</FileName>
               <FileType>1</FileType>
               <FilePath>.\drivers\drv_eth.c</FilePath>
@@ -635,6 +635,16 @@
                   </Cads>
                 </FileArmAds>
               </FileOption>
+            </File>
+            <File>
+              <FileName>drv_sdio_sd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\drv_sdio_sd.c</FilePath>
+            </File>
+            <File>
+              <FileName>lcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\lcd.c</FilePath>
             </File>
           </Files>
         </Group>

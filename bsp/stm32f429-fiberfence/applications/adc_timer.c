@@ -13,6 +13,7 @@ volatile rt_bool_t data_flag = RT_FALSE;
 volatile u8 timeout=0;
 volatile float tm;
 
+ALIGN(4)
 struct ADC_data adc_data_a, adc_data_b;
 
 extern struct rt_mailbox mb_a, mb_b;
@@ -97,6 +98,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		
 		result = ADC_Conversion(CHAN1_CONVERSION);
 		adc_data_a.dc1[id%100] = result&0x0fff;
+		//rt_kprintf("%d\n", result&0x0fff);
 		result = ADC_Conversion(CHAN2_CONVERSION);
 		adc_data_a.dc2[id%100] = result&0x0fff;
 		result = ADC_Conversion(CHAN3_CONVERSION);
@@ -107,9 +109,9 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		result = ADC_Conversion(CHAN4_CONVERSION);
 		//rt_kprintf("channel4:%d\n", result >> 12);
 		if(data_flag==0)
-			adc_data_a.ac1[id] = result&0x0fff;
+			adc_data_a.ac1[id] = 2560;//result&0x0fff;
 		else
-			adc_data_b.ac1[id] = result&0x0fff;
+			adc_data_b.ac1[id] = 2530;//result&0x0fff;
 		
 //		//start_the_time();
 //		//获取防区a光功率
