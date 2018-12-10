@@ -15,7 +15,9 @@
 
 #include <board.h>
 #include <rtthread.h>
-#include "udp_demo.h"
+//#include "udp_demo.h"
+#include "lcd.h"
+#include "lcd12864.h"
 
 #ifdef RT_USING_DFS
 /* dfs init */
@@ -67,9 +69,12 @@ void rt_init_thread_entry(void* parameter)
         
 #endif /* DFS */
 				
+				lcd1602_init();
+				Lcd_init();
+				
 	buffer = rt_ringbuffer_create(50);
 				
-	udp_demo_test();
+	//udp_demo_test();
     
 #ifdef PKG_USING_GUIENGINE
 	{

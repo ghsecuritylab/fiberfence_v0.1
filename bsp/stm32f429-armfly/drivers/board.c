@@ -18,6 +18,7 @@
 #include "stm32f4xx.h"
 #include "board.h"
 #include "stm32f4xx_hal.h"
+#include "delay.h"
 
 void _init(void)
 {
@@ -140,6 +141,8 @@ void rt_hw_board_init()
     HAL_Init();
 
     SystemClock_Config();
+	
+		delay_init(180);
     
 #ifdef RT_USING_COMPONENTS_INIT
     rt_components_board_init();

@@ -396,9 +396,14 @@
               <FilePath>applications\startup.c</FilePath>
             </File>
             <File>
-              <FileName>udp_demo.c</FileName>
+              <FileName>delay.c</FileName>
               <FileType>1</FileType>
-              <FilePath>applications\udp_demo.c</FilePath>
+              <FilePath>.\applications\delay.c</FilePath>
+            </File>
+            <File>
+              <FileName>sys.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\applications\sys.c</FilePath>
             </File>
           </Files>
         </Group>
@@ -424,11 +429,6 @@
               <FileName>drv_eth.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\drv_eth.c</FilePath>
-            </File>
-            <File>
-              <FileName>drv_lcd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>drivers\drv_lcd.c</FilePath>
             </File>
             <File>
               <FileName>drv_i2c.c</FileName>
@@ -459,6 +459,16 @@
               <FileName>drv_sdio_sd.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\drv_sdio_sd.c</FilePath>
+            </File>
+            <File>
+              <FileName>lcd.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\lcd.c</FilePath>
+            </File>
+            <File>
+              <FileName>lcd12864.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\drivers\lcd12864.c</FilePath>
             </File>
           </Files>
         </Group>
