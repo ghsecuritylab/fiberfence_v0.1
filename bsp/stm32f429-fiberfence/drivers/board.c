@@ -20,7 +20,6 @@
 #include "usart.h"
 #include "stm32f4xx_hal.h"
 #include "drv_sdram.h"
-#include "drv_nand.h"
 #include "drv_mpu.h"
 #include "delay.h"
 
@@ -160,7 +159,7 @@ void rt_hw_board_init()
 
     SystemClock_Config();
 	
-		//delay_init(180);
+		delay_init(180);
     
 #ifdef RT_USING_COMPONENTS_INIT
     rt_components_board_init();

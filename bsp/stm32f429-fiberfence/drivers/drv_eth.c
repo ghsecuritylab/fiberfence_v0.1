@@ -168,7 +168,7 @@ void HAL_ETH_ErrorCallback(ETH_HandleTypeDef *heth)
 }
 
 
-static void phy_register_read(int reg)
+int phy_register_read(int reg)
 {
     uint32_t value;
     if (reg > 0xFF || reg < 0)
@@ -176,7 +176,8 @@ static void phy_register_read(int reg)
     
     HAL_ETH_ReadPHYRegister(&EthHandle, reg, &value);
     
-    rt_kprintf("reg: %02X ==> %08X\n", reg, value);
+    //rt_kprintf("reg: %02X ==> %08X\n", reg, value);
+		return value;
 
 }
 #ifdef RT_USING_FINSH

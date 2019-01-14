@@ -40,11 +40,11 @@ void LcdCommandWrite(int value)
 		 value >>= 1;
 	}
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_6, GPIO_PIN_RESET);
-	delay_ms(10);
+	delay_us(1);
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_6, GPIO_PIN_SET);
-	delay_ms(10);
+	delay_us(1);
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_6, GPIO_PIN_RESET);
-	delay_ms(10);
+	delay_us(1);
 }
 
 void LcdDataWrite(int value) 
@@ -85,11 +85,11 @@ void LcdDataWrite(int value)
 		 value >>= 1;
 	}
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_6, GPIO_PIN_RESET);
-	delay_ms(10);
+	delay_us(1);
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_6, GPIO_PIN_SET);
-	delay_ms(10);
+	delay_us(1);
 	HAL_GPIO_WritePin(GPIOE, GPIO_PIN_6, GPIO_PIN_RESET);
-	delay_ms(10);
+	delay_us(1);
 }
 
 void lcdStrWrite(char *s)
@@ -98,7 +98,7 @@ void lcdStrWrite(char *s)
 	while(s[i]!='\0')
 	{
 		LcdDataWrite(s[i]);
-		delay_ms(100);
+		delay_ms(1);
 		i++;
 	}
 }
@@ -151,64 +151,30 @@ void lcd1602_init(void)
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 	
 	LcdCommandWrite(0x38);  // ???8-bit??,2???,5x7????                     
-	delay_ms(464);                      
+	delay_ms(10);                      
 	LcdCommandWrite(0x38);  // ???8-bit??,2???,5x7????                        
-	delay_ms(450);                      
+	delay_ms(100);                      
 	LcdCommandWrite(0x38);  // ???8-bit??,2???,5x7????                        
-	delay_ms(420);                      
+	delay_ms(100);                      
 	LcdCommandWrite(0x06);  // ??????
 													 // ????,??????
-	delay_ms(420);                      
-	LcdCommandWrite(0x0F);  // ????
+	delay_ms(100);                      
+	LcdCommandWrite(0x0C);  // ????
 													 // ?????,????,???
-	delay_ms(420);                      
+	delay_ms(100);                      
 	LcdCommandWrite(0x01);  // ????,??????  
-	delay_ms(20000);                      
+	delay_ms(100);                      
 	LcdCommandWrite(0x80);  // ????
-	delay_ms(200); 
+	delay_ms(100); 
 	
 	LcdCommandWrite(0x01);  // ????,??????  
-  delay_ms(20000); 
+  delay_ms(100); 
   LcdCommandWrite(0x80+5); 
   delay_ms(100); 
 	lcdStrWrite("Welcome");
-//  LcdDataWrite('W');
-//	delay_ms(100); 
-//  LcdDataWrite('e');
-//	delay_ms(100); 
-//  LcdDataWrite('l');
-//	delay_ms(100); 
-//  LcdDataWrite('c');
-//	delay_ms(100); 
-//  LcdDataWrite('o');
-//	delay_ms(100); 
-//  LcdDataWrite('m');
-//	delay_ms(100); 
-//  LcdDataWrite('e');
 	delay_ms(100); 
 	LcdCommandWrite(0xC0+3);
 	delay_ms(100);    
 	lcdStrWrite("Fiber fence");
-//  LcdDataWrite('F');
-//	delay_ms(100); 
-//  LcdDataWrite('i');
-//	delay_ms(100); 
-//  LcdDataWrite('b');
-//	delay_ms(100); 
-//  LcdDataWrite('e');
-//	delay_ms(100); 
-//  LcdDataWrite('r');
-//	delay_ms(100); 
-//  LcdDataWrite(' ');
-//	delay_ms(100); 
-//  LcdDataWrite('f');
-//	delay_ms(100); 
-//	LcdDataWrite('e');
-//	delay_ms(100); 
-//  LcdDataWrite('n');
-//	delay_ms(100); 
-//  LcdDataWrite('c');
-//	delay_ms(100); 
-//  LcdDataWrite('e');
 	delay_ms(100);  
 }

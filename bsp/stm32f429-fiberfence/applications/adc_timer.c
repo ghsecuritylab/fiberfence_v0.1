@@ -95,51 +95,26 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	
 	if(htim==(&TIM3_Handler))
 	{
-		
+		//start_the_time();
 		result = ADC_Conversion(CHAN1_CONVERSION);
 		adc_data_a.dc1[id%100] = result&0x0fff;
-		//rt_kprintf("%d\n", result&0x0fff);
+
 		result = ADC_Conversion(CHAN2_CONVERSION);
 		adc_data_a.dc2[id%100] = result&0x0fff;
+		
 		result = ADC_Conversion(CHAN3_CONVERSION);
 		if(data_flag==0)
-			adc_data_a.ac2[id] = result;//&0x0fff;
+			adc_data_a.ac2[id] = result&0x0fff;
 		else
-			adc_data_b.ac2[id] = result;//&0x0fff;
+			adc_data_b.ac2[id] = result&0x0fff;
+		
 		result = ADC_Conversion(CHAN4_CONVERSION);
-		//rt_kprintf("channel4:%d\n", result >> 12);
 		if(data_flag==0)
-			adc_data_a.ac1[id] = 2560;//result&0x0fff;
+			adc_data_a.ac1[id] = result&0x0fff;
 		else
-			adc_data_b.ac1[id] = 2530;//result&0x0fff;
+			adc_data_b.ac1[id] = result&0x0fff;
 		
-//		//start_the_time();
-//		//获取防区a光功率
-//		result = adc_ReadOneSample(0x8310);
-//		adc_data_a.dc1[id%100] = result&0x0fff;
-//		
-//		
-//		//获取防区b光功率
-//		result = adc_ReadOneSample(0x8730);
-//		adc_data_a.dc2[id%100] = result&0x0fff;
-
-//		
-//		//获取防区b交流信号
-//		result = adc_ReadOneSample(0x8b30);
-//		if(data_flag==0)
-//			adc_data_a.ac2[id] = result;//&0x0fff;
-//		else
-//			adc_data_b.ac2[id] = result;//&0x0fff;
-//		
-//		
-//		//获取防区a交流信号
-//		result = adc_ReadOneSample(0x8f10);
-//		if(data_flag==0)
-//			adc_data_a.ac1[id] = result&0x0fff;
-//		else
-//			adc_data_b.ac1[id] = result&0x0fff;
-		
-		//rt_kprintf("time:%d us\n", stop_the_time());
+		//rt_kprintf("time:%d us\n", stop_the_time());			
 		
 		id++;
 		if(id >= 1000){
@@ -165,7 +140,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 	
 
-	if(htim==(&TIM4_Handler))       //定时器3
+	if(htim==(&TIM4_Handler))       //定时器4
 	{
 			timeout++;
 	}

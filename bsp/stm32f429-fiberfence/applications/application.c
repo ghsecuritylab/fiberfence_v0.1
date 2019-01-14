@@ -15,6 +15,7 @@
 
 #include <board.h>
 #include <rtthread.h>
+#include <dfs_posix.h>
 #include <drivers/mtd_nand.h>
 #include "finsh.h"
 #include "time.h"
@@ -48,45 +49,61 @@
 #include "drv_eth.h"
 #endif
 
-rt_thread_t tid, tid1, powerid, alarmid_A, alarmid_B, keyid;
+rt_thread_t tid, tid1, powerid, alarmid_A, alarmid_B, keyid, udp_server_id, alarm_log_id;
+struct rt_timer fresh_timer;
 
-struct rt_mailbox mb_a, mb_b, mb_udp;
+struct rt_mailbox mb_a, mb_b, mb_udp, mb_alarm;
 
-static char mb_a_pool[4], mb_b_pool[4], mb_udp_pool[4];
+static char mb_a_pool[4], mb_b_pool[4], mb_udp_pool[4], mb_alarm_pool[40];
 
 //static char sd[3000];
 
 extern struct ADC_data adc_data_a;
 
 //extern rt_uint16_t adc_ReadOneSample(rt_uint16_t cmd);
-void udpinit(char *send_data)
+void udp_send_data(char *send_data, u16 chan)
 {
     int sock, port=8089;
     struct hostent *host;
     struct sockaddr_in server_addr;
+		char *tmp;
+	
+		tmp=rt_malloc(2004);
 
-    /* ????????url??host??(?????,??????) */
-    host = (struct hostent *) gethostbyname("192.168.1.102");
+    host = (struct hostent *) gethostbyname("192.168.1.255");
 
-    /* ????socket,???SOCK_DGRAM,UDP?? */
     if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
     {
         rt_kprintf("Socket error\n");
         return;
     }
 
-    /* ???????????? */
     server_addr.sin_family = AF_INET;
     server_addr.sin_port = htons(port);
     server_addr.sin_addr = *((struct in_addr *) host->h_addr);
     rt_memset(&(server_addr.sin_zero), 0, sizeof(server_addr.sin_zero));
-
-		sendto(sock, send_data, 1000, 0,
+		
+		//受mtu限制，一次只能发1472字节，所以send_data需要分两次发送
+		//发送前500个数据
+		*(u16 *)tmp=chan;
+		rt_memcpy(tmp+2, send_data, 1000);
+		sendto(sock, tmp, 1002, 0,
 					 (struct sockaddr *) &server_addr, sizeof(struct sockaddr));
 
-		sendto(sock, send_data+1000, 1000, 0,
+		//发送后500个数据
+		*(u16 *)(tmp+1002)=chan;
+		rt_memcpy(tmp+1002+2, send_data+1000, 1000);
+		sendto(sock, tmp+1002, 1002, 0,
 					 (struct sockaddr *) &server_addr, sizeof(struct sockaddr));
+		
     lwip_close(sock);
+		rt_free(tmp);
+}
+
+static void timeout1(void* parameter)
+{
+  //rt_kprintf("periodic timer is timeout\n");
+	lcdDisplayMainwindow();
 }
 
 
@@ -96,12 +113,6 @@ void rt_init_thread_entry(void* parameter)
 #ifdef RT_USING_COMPONENTS_INIT
     rt_components_init();
 #endif
-  
-		AD7924_Init();
-		TIM4_Init(65535-1, 90-1);
-		TIM3_Init(250-1, 90-1);
-		info_init();
-		lcd1602_init();
     
 #ifdef RT_USING_DFS   
 	dfs_init();
@@ -132,10 +143,25 @@ void rt_init_thread_entry(void* parameter)
         
 #endif /* DFS */
 		
-		//udp_demo_test();
+		info_init();
+		lcd1602_init();
+		AD7924_Init();
+		TIM3_Init(50-1, 90-1);
+		TIM4_Init(65535-1, 90-1);
 		
+		
+		
+		extern int phy_register_read(int reg);
+		int value;
 		while(1){
 			//adc_ReadOneSample(0x8310);
+			value=phy_register_read(1);
+			if((value&0x0004) == 0)
+				HAL_GPIO_WritePin(GPIOG, LED14_Pin|CPU_RUN_Pin, GPIO_PIN_SET);
+				//rt_kprintf("link down\n");
+			else
+				HAL_GPIO_WritePin(GPIOG, LED14_Pin|CPU_RUN_Pin, GPIO_PIN_RESET);
+				//rt_kprintf("link up\n");
 			rt_thread_delay(1000);
 		}
 }
@@ -159,10 +185,19 @@ void rt_system_led_thread_entry(void* parameter)
 */
 void rt_optic_power_thread_entry(void* parameter)
 {
-	int i;
 	while(1){
-//		for(i=0;i<100;i++)
-				rt_kprintf("%d   %d\n",adc_data_a.dc1[10]&0x0fff, adc_data_a.dc2[10]&0x0fff);
+		info.item5.param1=adc_data_a.dc1[10];
+		info.item6.param1=adc_data_a.dc2[10];
+		if(info.item5.active)     //如果lcd当前显示光功率,更新显示
+		{
+			lcdDisplayItem(info.item5);
+		}
+		
+		if(info.item6.active)     //如果lcd当前显示光功率,更新显示
+		{
+			lcdDisplayItem(info.item6);
+		}
+		
 		if(adc_data_a.dc1[10]<info.item3.param1)
 			LED_PowerA = OFF;
 		else
@@ -172,7 +207,7 @@ void rt_optic_power_thread_entry(void* parameter)
 			LED_PowerB = OFF;
 		else
 			LED_PowerB = ON;
-		rt_thread_delay(50);
+		rt_thread_delay(250);
 
 	}
 }
@@ -184,7 +219,6 @@ void rt_alarm_process_A_thread_entry(void* parameter)
 {
 	int i, count=0;
 	rt_uint16_t *value;
-	rt_err_t error;
 
 	while(1)
 	{
@@ -192,7 +226,7 @@ void rt_alarm_process_A_thread_entry(void* parameter)
 		{
 			
 			//等待一个报警时间间隔
-			if(count<4*info.item4.param1){
+			if(count<20*info.item4.param1){
 				count++;
 				goto send_data;           //报警时间间隔未到，直接将数据发送到PC
 			}
@@ -200,26 +234,25 @@ void rt_alarm_process_A_thread_entry(void* parameter)
 			//开始信号处理
 			for(i=0; i<1000; i++)
 			{
-				if(value[i]>info.item1.param1 || value[i]<(2*2048-info.item1.param1))
+				if((value[i]&0x0FFF)>info.item1.param1 || (value[i]&0x0FFF)<(2*2048-info.item1.param1))
 				{
 					HAL_GPIO_WritePin(GPIOG, LED12_Pin, GPIO_PIN_RESET);            //打开报警LED
 					//HAL_GPIO_WritePin(CTRL_B_GPIO_Port, CTRL_B, GPIO_PIN_SET);      //输出报警开关量
+					rt_mb_send(&mb_alarm, 1);
 					
 					info.item7.param1++;      //报警计数+1
 					if(info.item7.active)     //如果lcd当前显示报警计数，更新显示
 					{
-						//lcdDisplayItem(info.item7);
+						lcdDisplayItem(info.item7);
 					}
 					count=0;        //报警时间间隔清零，开始计数
   				break;
 				}
 			}
-			
-			//rt_kprintf("adc1:%d\n", value[100]);
 		}
 		
 		//达到报警时间间隔，关闭报警
-		if(count>=4*info.item4.param1)
+		if(count>=20*info.item4.param1)
 		{
 			HAL_GPIO_WritePin(GPIOG, LED12_Pin, GPIO_PIN_SET);                    //关闭报警LED
 			HAL_GPIO_WritePin(CTRL_B_GPIO_Port, CTRL_B, GPIO_PIN_RESET);          //关闭报警开关量
@@ -227,7 +260,7 @@ void rt_alarm_process_A_thread_entry(void* parameter)
 		
 		//将数据打包发送到PC处理
 		send_data:
-			udpinit((char*)value);
+			udp_send_data((char*)value, 11);
 //			error = rt_mb_send(&mb_udp, (rt_uint32_t)value);
 //			for(i=0; i<1000; i++)
 //			{
@@ -249,12 +282,16 @@ void rt_alarm_process_B_thread_entry(void* parameter)
 {
 	int i, count=0;
 	rt_uint16_t *value;
+	
+	int fd;
+	
+	 
 
 	while(1){
 		if (rt_mb_recv(&mb_b, (rt_uint32_t*)&value, RT_WAITING_FOREVER)== RT_EOK)
 		{
 			//等待一个报警时间间隔
-			if(count<4*info.item4.param1){
+			if(count<20*info.item4.param1){
 				count++;
 				goto send_data;           //报警时间间隔未到，直接将数据发送到PC
 			}
@@ -267,21 +304,33 @@ void rt_alarm_process_B_thread_entry(void* parameter)
 					HAL_GPIO_WritePin(GPIOG, LED7_Pin, GPIO_PIN_RESET);               //打开报警LED
 					//HAL_GPIO_WritePin(CTRL_A_GPIO_Port, CTRL_A, GPIO_PIN_SET);        //输出报警开关量
 					
+					rt_mb_send(&mb_alarm, 2);
+//					time_t now;
+//					now = time(RT_NULL);
+					
+					
+//					start_the_time();
+//					fd = open("/alarm.txt", O_WRONLY | O_CREAT | O_APPEND, 0);
+//					write(fd, "abcdefg\n", 8);
+//					close(fd);	
+//					rt_kprintf("time:%d us\n", stop_the_time());	
+					
+					
+					
 					info.item8.param1++;        //报警计数+1
 					if(info.item8.active)       //如果lcd当前显示报警计数，更新显示
 					{
-						//lcdDisplayItem(info.item8);
+						lcdDisplayItem(info.item8);
 					}
 					count=0;          //报警时间间隔清零，开始计数
   				break;
 				}
 			}
-			
-			//rt_kprintf("adc2:%d\n", (value[i]&0x0FFF));
 		}
 		
+		
 		//达到报警时间间隔，关闭报警
-		if(count>=4*info.item4.param1)
+		if(count>=20*info.item4.param1)
 		{
 			HAL_GPIO_WritePin(GPIOG, LED7_Pin, GPIO_PIN_SET);                  //关闭报警LED
 			HAL_GPIO_WritePin(CTRL_A_GPIO_Port, CTRL_A, GPIO_PIN_RESET);       //关闭报警开关量
@@ -290,6 +339,7 @@ void rt_alarm_process_B_thread_entry(void* parameter)
 		
 		//将数据打包发送到PC处理
 		send_data:
+		udp_send_data((char*)value, 22);
 //			for(i=0; i<1000; i++)
 //			{
 //				sd[i*3+0] = 0x55;               //添加校验码
@@ -300,7 +350,9 @@ void rt_alarm_process_B_thread_entry(void* parameter)
 //			rt_thread_suspend(alarmid_B);                                 //线程挂起，等待传输完成（传输完成后中断回调函数自动激活线程）
 //			rt_schedule();
 		;
+		
 	}
+	
 	
 }
 
@@ -319,42 +371,73 @@ void rt_key_thread_entry(void* parameter)
 		{
 			case KEY0_PRES:                //back
 				key_back_perss();
-				rt_kprintf("KEY0_PRES\n");
+				//rt_kprintf("KEY0_PRES\n");
 				break;
 			case KEY1_PRES:                //enter
-				LcdCommandWrite(0x01);  //
-				delay_ms(20000); 
-				LcdCommandWrite(0x80+3); 
-				delay_ms(100);
-				lcdStrWrite("hello world!");
-				delay_ms(100);
-				rt_kprintf("KEY1_PRES\n");
+				key_enter_press();
+				//rt_kprintf("KEY1_PRES\n");
 				break;
 			case KEY2_PRES:                //sub
 				key_sub_press();
-				rt_kprintf("KEY2_PRES\n");
+				//rt_kprintf("KEY2_PRES\n");
 				break;
 			case KEY3_PRES:                //add
 				key_plus_press();
-				rt_kprintf("KEY3_PRES\n");
+				//rt_kprintf("KEY3_PRES\n");
 				break;
 			case KEY4_PRES:                //down
 				key_down_press();
-				rt_kprintf("KEY4_PRES\n");
+				//rt_kprintf("KEY4_PRES\n");
 				break;
 			case KEY5_PRES:                //up
 				key_up_press();
-				rt_kprintf("KEY5_PRES\n");
+				//rt_kprintf("KEY5_PRES\n");
 				break;
 			default:
 				break;	
 		}
+		
+		if(key_value>0)
+			rt_timer_start(&fresh_timer);
+		
 		rt_thread_delay(60);
 	}
 }
 
+void alarm_log()
+{
+		int fd, i=1;
+		char *str, buf[100];
+		rt_uint32_t value;
+		while(1)
+		{
+			if (rt_mb_recv(&mb_alarm, (rt_uint32_t *)&value, RT_WAITING_FOREVER)== RT_EOK)
+			{
+					time_t now;
+					now = time(RT_NULL);
+					str=ctime(&now);
+					if(value==1){
+						//rt_kprintf("alarm A\n");
+						sprintf(buf, "%d.A fence zone alarmed at %s", i, str);
+					}
+					else if(value==2){
+						//rt_kprintf("alarm B\n");
+						sprintf(buf, "%d.B fence zone alarmed at %s", i, str);
+					}
+					else
+						continue;
+					
+					i++;
+//					fd = open("/alarm.txt", O_WRONLY | O_CREAT | O_APPEND, 0);
+//					write(fd, buf, strlen(buf));
+//					close(fd);
+			}
+		}
+}
+
 int rt_application_init()
 {
+		extern void udpserv(void* paramemter);
 
 		rt_mb_init(&mb_a,
 								"mbt_a", /* name */
@@ -372,6 +455,12 @@ int rt_application_init()
 								"mbt_udp", /* name */
 								&mb_udp_pool[0], /* mail mb_pool */
 								sizeof(mb_udp_pool)/4, /*size*/
+								RT_IPC_FLAG_FIFO);
+								
+		rt_mb_init(&mb_alarm,
+								"mbt_alarm", /* name */
+								&mb_alarm_pool[0], /* mail mb_pool */
+								sizeof(mb_alarm_pool)/4, /*size*/
 								RT_IPC_FLAG_FIFO);
 	
     tid = rt_thread_create("init",
@@ -415,6 +504,26 @@ int rt_application_init()
 
     if (alarmid_B != RT_NULL)
         rt_thread_startup(alarmid_B);
+		
+		udp_server_id = rt_thread_create("udp_server",
+        udpserv, RT_NULL,
+        2048, RT_THREAD_PRIORITY_MAX/3-1, 20);
+
+    if (udp_server_id != RT_NULL)
+        rt_thread_startup(udp_server_id);
+		
+		alarm_log_id = rt_thread_create("alarm_log",
+        alarm_log, RT_NULL,
+        2048, RT_THREAD_PRIORITY_MAX/3+3, 20);
+
+    if (alarm_log_id != RT_NULL)
+        rt_thread_startup(alarm_log_id);
+		
+		rt_timer_init(&fresh_timer, "timer1",
+                    timeout1, 
+                    RT_NULL, 
+                    5000, 
+                    RT_TIMER_FLAG_ONE_SHOT);
 
     return 0;
 }

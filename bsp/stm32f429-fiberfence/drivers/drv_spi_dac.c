@@ -194,7 +194,7 @@ int dac3_init()
 }
 INIT_COMPONENT_EXPORT(dac3_init)
 
-int test_dac_7513(rt_uint16_t value, rt_uint16_t chip_id)
+int set_dac(rt_uint16_t value, rt_uint16_t chip_id)
 {
 	struct rt_spi_device *device;
 	if(chip_id==2)
@@ -211,6 +211,6 @@ int test_dac_7513(rt_uint16_t value, rt_uint16_t chip_id)
 
 #ifdef RT_USING_FINSH
 #include <finsh.h>
-FINSH_FUNCTION_EXPORT_ALIAS(test_dac_7513, tdac, test dac 7513);
+FINSH_FUNCTION_EXPORT_ALIAS(set_dac, set_dac, set value of dac_7513);
 #endif
 

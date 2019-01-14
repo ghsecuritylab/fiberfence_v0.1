@@ -61,11 +61,6 @@ void assert_failed(uint8_t* file, uint32_t line)
  */
 void rtthread_startup(void)
 {
-//#ifdef RT_USING_EXT_SDRAM
-//    rt_system_heap_init((void*)EXT_SDRAM_BEGIN, (void*)EXT_SDRAM_END);
-//#else
-//    rt_system_heap_init((void*)HEAP_BEGIN, (void*)HEAP_END);
-//#endif
     /* init board */
     rt_hw_board_init();
 

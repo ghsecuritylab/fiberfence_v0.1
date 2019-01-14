@@ -18,7 +18,6 @@
 
 #include <stm32f4xx.h>
 #include <drv_sdram.h>
-#include <drv_nand.h>
 
 /* board configuration */
 // <o> SDCard Driver <1=>SDIO sdcard <0=>SPI MMC card

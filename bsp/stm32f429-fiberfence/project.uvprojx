@@ -462,6 +462,21 @@
               <FileType>1</FileType>
               <FilePath>.\applications\key_app.c</FilePath>
             </File>
+            <File>
+              <FileName>cpuusage.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\applications\cpuusage.c</FilePath>
+            </File>
+            <File>
+              <FileName>finsh_debug.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\applications\finsh_debug.c</FilePath>
+            </File>
+            <File>
+              <FileName>file_test.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>.\applications\file_test.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -538,11 +538,16 @@ RTM_EXPORT(rt_strdup);
  */
 void rt_show_version(void)
 {
-    rt_kprintf("\n \\ | /\n");
-    rt_kprintf("- RT -     Thread Operating System\n");
-    rt_kprintf(" / | \\     %d.%d.%d build %s\n",
+    rt_kprintf("\n\t  ********\n");
+	  rt_kprintf("\t ****$$****\n");
+    rt_kprintf("\t* XD-tech  * \n");
+		rt_kprintf("\t ****$$**** \n");
+		rt_kprintf("\t  ********\n");
+		rt_kprintf("      Fiber Fence System\n");
+    rt_kprintf("   %d.%d.%d build %s\n",
                RT_VERSION, RT_SUBVERSION, RT_REVISION, __DATE__);
-    rt_kprintf(" 2006 - 2018 Copyright by rt-thread team\n");
+    rt_kprintf(" Copyright by XD-tech.Co.,Ltd.\n");
+		rt_kprintf("\t  2017-2018\n\n");
 }
 RTM_EXPORT(rt_show_version);
 

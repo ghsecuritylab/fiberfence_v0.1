@@ -46,7 +46,7 @@
 
 static struct rt_i2c_bus_device *_i2c_bus;
 
-static int AT24CXX_Read(rt_uint16_t addr,
+int AT24CXX_Read(rt_uint16_t addr,
                         void *buf,
                         size_t len)
 {
@@ -69,8 +69,9 @@ static int AT24CXX_Read(rt_uint16_t addr,
     else
         return -1;
 }
+RTM_EXPORT(AT24CXX_Read);
 
-static int AT24CXX_Write(rt_uint16_t addr,
+int AT24CXX_Write(rt_uint16_t addr,
                         void *buf,
                         size_t len)
 {
@@ -94,6 +95,7 @@ static int AT24CXX_Write(rt_uint16_t addr,
     else
         return -1;
 }
+RTM_EXPORT(AT24CXX_Write);
 
 #ifdef RT_USING_FINSH
 static int test_at24cxx(rt_uint16_t addr)

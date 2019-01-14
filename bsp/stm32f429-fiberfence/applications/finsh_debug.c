@@ -1,10 +1,23 @@
 #include <rtthread.h>
 #include "key_app.h"
-#include "common_def.h"
-#include "24cxx.h"
+#include "adc_timer.h"
+#include <dfs_posix.h>
+#include <string.h>
 
 extern struct Display_Info info;
 extern struct rt_mailbox mb_a, mb_b;
+
+struct Params{
+	rt_uint16_t alarm_A_th;
+	rt_uint16_t alarm_B_th;
+	rt_uint16_t power_th;
+	rt_uint16_t alarm_interval;
+	rt_uint16_t addr1;
+	rt_uint16_t addr2;
+	rt_uint16_t addr3;
+	rt_uint16_t addr4;
+	rt_uint16_t port;
+};
 
 enum KEY_VALUE
 {
@@ -82,15 +95,136 @@ void save_parameter()
 										103,
 										85,
 										5900};
-	AT24CXX_Write(0,(u8 *)&P, sizeof(struct Params));
+	AT24CXX_Write(0,(char *)&P, sizeof(struct Params));
 }
 
 void load_parameter()
 {
 	struct Params P;
-	AT24CXX_Read(0,(u8 *)&P, sizeof(struct Params));
+	AT24CXX_Read(0,(char *)&P, sizeof(struct Params));
 	rt_kprintf("%d.%d.%d.%d\n", P.addr1,P.addr2,P.addr3,P.addr4);
 }
+
+void set_sample_frq(int frq)
+{
+	TIM3_Init(1000000/frq-1,90-1);
+}
+
+int get_line(int fd, char *buffer)
+{
+	int i=0, len;
+	while(1){
+		len = read(fd, &buffer[i], 1); 
+		if(len<1)
+			break;
+		if(buffer[i]=='\n')
+			break;
+		i++;
+	}
+	buffer[i]='\0';
+	return i;
+}
+
+void test_fgets()
+{
+	int fd, length;
+	int	i=0;
+	char buf[128];
+	fd = open("/alarm.txt", O_RDONLY, 0); 
+	if (fd < 0) 
+	{ 
+			rt_kprintf("check: open file for read failed\n"); 
+			return; 
+	} 
+	do{
+		length=get_line(fd, buf);
+		rt_kprintf("%s(length:%d)\n", buf, length);
+	}while(length!=0);
+	close(fd);
+	
+}
+
+void save_config()
+{
+	char buf[256];
+	int fd, i, len;
+	fd = open("/config.ini", O_WRONLY | O_CREAT | O_TRUNC, 0);
+	if (fd < 0) 
+	{ 
+			rt_kprintf("check: open file for read failed\n"); 
+			return; 
+	} 
+	
+	len=sprintf(buf, "alarm_threshold_A:%d\nalarm_threshold_B:%d\n"
+										"optic_power_threshold:%d\nalarm_time_interval:%d\n",
+											info.item1.param1, info.item2.param1,
+											info.item3.param1, info.item4.param1);
+	write(fd, buf, len);
+
+//	len=sprintf(buf, "alarm_threshold_A:%d\n", info.item1.param1);
+//	write(fd, buf, len);
+//	len=sprintf(buf, "alarm_threshold_B:%d\n", info.item2.param1);
+//	write(fd, buf, len);
+//	len=sprintf(buf, "optic_power_threshold:%d\n", info.item3.param1);
+//	write(fd, buf, len);
+//	len=sprintf(buf, "alarm_time_interval:%d\n", info.item4.param1);
+//	write(fd, buf, len);
+//	len=sprintf(buf, "optic_Power_A:%d\n", info.item5.param1);
+//	write(fd, buf, len);
+//	len=sprintf(buf, "optic_Power_B:%d\n", info.item6.param1);
+//	write(fd, buf, len);
+//	len=sprintf(buf, "alarm_count_A:%d\n", info.item7.param1);
+//	write(fd, buf, len);
+//	len=sprintf(buf, "alarm_count_B:%d\n", info.item7.param1);
+//	write(fd, buf, len);
+	close(fd);	
+}
+
+void load_config()
+{
+	int fd, length;
+	int	i=0;
+	char buf[128];
+	fd = open("/config.ini", O_RDONLY, 0); 
+	if (fd < 0) 
+	{ 
+			rt_kprintf("check: open file for read failed\n"); 
+			return; 
+	} 
+	do{
+		length=get_line(fd, buf);
+		char *p; 
+    p = strtok(buf, ":");
+		if(strcmp(p, "alarm_threshold_A")==0){
+				p = strtok(NULL, ":");
+				info.item1.param1=atoi(p);
+		}
+		else if(strcmp(p, "alarm_threshold_B")==0){
+				p = strtok(NULL, ":");
+				info.item2.param1=atoi(p);
+		}
+		else if(strcmp(p, "optic_power_threshold")==0){
+				p = strtok(NULL, ":");
+				info.item3.param1=atoi(p);
+		}
+		else if(strcmp(p, "alarm_time_interval")==0){
+				p = strtok(NULL, ":");
+				info.item4.param1=atoi(p);
+		}	
+
+		//rt_kprintf("%s\n", buf, length);
+	}while(length!=0);
+	close(fd);
+}
+
+void reset_config()
+{
+	info.item1.param1=ALARM_THRESHOLD_A;
+	info.item2.param1=ALARM_THRESHOLD_B;
+	info.item3.param1=OPTIC_POWER_THRESHOLD;
+	info.item4.param1=ALARM_INTERVAL;
+}
+RTM_EXPORT(reset_config);
 
 #ifdef RT_USING_FINSH
 #include <finsh.h>
@@ -99,4 +233,9 @@ FINSH_FUNCTION_EXPORT_ALIAS(list_all_param, lap, list all parameter);
 FINSH_FUNCTION_EXPORT(sub_version,);
 FINSH_FUNCTION_EXPORT(save_parameter,);
 FINSH_FUNCTION_EXPORT(load_parameter,);
+FINSH_FUNCTION_EXPORT(set_sample_frq, set sample frequency);
+FINSH_FUNCTION_EXPORT(test_fgets,);
+FINSH_FUNCTION_EXPORT(save_config,);
+FINSH_FUNCTION_EXPORT(load_config,);
+FINSH_FUNCTION_EXPORT_ALIAS(reset_config, reset,);
 #endif
