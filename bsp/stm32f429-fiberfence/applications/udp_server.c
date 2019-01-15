@@ -1,5 +1,5 @@
 /*
- * 代码清单：UDP服务端例子
+ * 代码清单：UDP服务端，接收和处理上位机发送的命令
  */
 #include <rtthread.h>
 #include <stdio.h>
@@ -29,7 +29,7 @@
 #define CMD_RESPONSE_UNKNOW    0x1111
 #define CMD_RESPONSE_MAGIC_ERR 0x2222
 
-extern float get_cpu();
+extern float get_cpu(void);
 extern int set_dac(rt_uint16_t value, rt_uint16_t chip_id);
 
 struct Cmd_Data{
@@ -51,6 +51,11 @@ void response(int sock, int cmd, struct sockaddr *client_addr, int addr_len)
 	sendto(sock, (char *)&r, BASE_PACK_LEN+2, 0, client_addr, addr_len);
 }
 
+/*********************************************************
+* 函数名：cmd_process
+* 
+* 功  能：处理接收到的命令
+*********************************************************/
 void cmd_process(int sock, struct Cmd_Data *cd, struct sockaddr *client_addr, int addr_len)
 {
 	char str[100];
@@ -62,6 +67,7 @@ void cmd_process(int sock, struct Cmd_Data *cd, struct sockaddr *client_addr, in
 			rt_kprintf("CMD:CMD_EXIT\n");
 			response(sock, CMD_RESPONSE_OK, client_addr, addr_len);
 			break;
+		//查询CPU使用率
 		case CMD_CPU_USAGE:
 		{
 			rt_kprintf("CMD:CMD_CPU_USAGE\n");
@@ -70,6 +76,7 @@ void cmd_process(int sock, struct Cmd_Data *cd, struct sockaddr *client_addr, in
 			sendto(sock, (char *)cd, BASE_PACK_LEN+2, 0, client_addr, addr_len);
 			break;
 		}
+		//查询光功率
 		case CMD_OPTIC_POWER:
 		{
 			rt_kprintf("CMD:CMD_OPTIC_POWER\n");
@@ -78,6 +85,7 @@ void cmd_process(int sock, struct Cmd_Data *cd, struct sockaddr *client_addr, in
 			sendto(sock, (char *)cd, BASE_PACK_LEN+2, 0, client_addr, addr_len);
 			break;
 		}
+		//查询报警数目
 		case CMD_ALARM_COUNT:
 		{
 			rt_kprintf("CMD:CMD_ALARM_COUNT\n");
@@ -86,6 +94,7 @@ void cmd_process(int sock, struct Cmd_Data *cd, struct sockaddr *client_addr, in
 			sendto(sock, (char *)cd, BASE_PACK_LEN+2, 0, client_addr, addr_len);
 			break;
 		}
+		//设置防区A信号增益
 		case CMD_DAC_GAIN_A:
 		{
 			rt_kprintf("CMD:CMD_DAC_GAIN_A\n");
@@ -93,6 +102,7 @@ void cmd_process(int sock, struct Cmd_Data *cd, struct sockaddr *client_addr, in
 			sendto(sock, (char *)cd, BASE_PACK_LEN+2, 0, client_addr, addr_len);
 			break;
 		}
+		//设置防区B信号增益
 		case CMD_DAC_GAIN_B:
 		{
 			rt_kprintf("CMD:CMD_DAC_GAIN_B\n");
@@ -100,10 +110,12 @@ void cmd_process(int sock, struct Cmd_Data *cd, struct sockaddr *client_addr, in
 			sendto(sock, (char *)cd, BASE_PACK_LEN+2, 0, client_addr, addr_len);
 			break;
 		}
+		//设置AD采样率
 		case CMD_ADC_SAMPLE_FRQ:
 			rt_kprintf("CMD:CMD_ADC_SAMPLE_FRQ\n");
 			response(sock, CMD_RESPONSE_OK, client_addr, addr_len);
 			break;
+		//设置防区A报警阈值
 		case CMD_ALARM_THRESHOLD_A:
 		{
 			rt_kprintf("CMD:CMD_ALARM_THRESHOLD_A\n");
@@ -111,6 +123,7 @@ void cmd_process(int sock, struct Cmd_Data *cd, struct sockaddr *client_addr, in
 			sendto(sock, (char *)cd, BASE_PACK_LEN+2, 0, client_addr, addr_len);
 			break;
 		}
+		//设置防区B报警阈值
 		case CMD_ALARM_THRESHOLD_B:
 		{
 			rt_kprintf("CMD:CMD_ALARM_THRESHOLD_B\n");
@@ -118,6 +131,7 @@ void cmd_process(int sock, struct Cmd_Data *cd, struct sockaddr *client_addr, in
 			sendto(sock, (char *)cd, BASE_PACK_LEN+2, 0, client_addr, addr_len);
 			break;
 		}
+		//设置光功率报警阈值
 		case CMD_POWER_THRESHOLD:
 		{
 			rt_kprintf("CMD:CMD_POWER_THRESHOLD\n");
@@ -125,6 +139,7 @@ void cmd_process(int sock, struct Cmd_Data *cd, struct sockaddr *client_addr, in
 			sendto(sock, (char *)cd, BASE_PACK_LEN+2, 0, client_addr, addr_len);
 			break;
 		}
+		//设置报警时间间隔
 		case CMD_ALARM_INTERVAL:
 		{
 			rt_kprintf("CMD:CMD_POWER_THRESHOLD\n");
@@ -133,6 +148,7 @@ void cmd_process(int sock, struct Cmd_Data *cd, struct sockaddr *client_addr, in
 			break;
 		}
 			
+		//错误命令响应
 		default:
 			rt_kprintf("CMD:CMD_RESPONSE_UNKNOW\n");
 			response(sock, CMD_RESPONSE_UNKNOW, client_addr, addr_len);
@@ -140,6 +156,11 @@ void cmd_process(int sock, struct Cmd_Data *cd, struct sockaddr *client_addr, in
 	}
 }
 
+/*********************************************************
+* 函数名：udpserv
+* 
+* 功  能：udp服务，接收上位机发送的命令，并响应上位机
+*********************************************************/
 void udpserv(void* paramemter)
 {
     int sock;
@@ -203,23 +224,14 @@ void udpserv(void* paramemter)
 
 				cmd_data_t=(struct Cmd_Data *)recv_data;
 				
+				/* 校验帧头 */
 				if(cmd_data_t->magic!=0x1234)
 				{
 						rt_kprintf("magic error\n");
 						continue;
 				}
-
+				/* 处理接收到命令 */
 				cmd_process(sock, cmd_data_t, (struct sockaddr *) &client_addr, addr_len);
-				
-//        /* 如果接收数据是exit，退出 */
-//        if (strcmp(recv_data, "exit") == 0)
-//        {
-//            lwip_close(sock);
-
-//            /* 释放接收用的数据缓冲 */
-//            rt_free(recv_data);
-//            break;
-//        }
     }
 		
 		lwip_close(sock);
@@ -227,9 +239,3 @@ void udpserv(void* paramemter)
 
     return;
 }
-
-//#ifdef RT_USING_FINSH
-//#include <finsh.h>
-///* 输出udpserv函数到finsh shell中 */
-//FINSH_FUNCTION_EXPORT(udpserv, startup udp server);
-//#endif

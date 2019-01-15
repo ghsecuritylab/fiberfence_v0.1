@@ -282,10 +282,6 @@ void rt_alarm_process_B_thread_entry(void* parameter)
 {
 	int i, count=0;
 	rt_uint16_t *value;
-	
-	int fd;
-	
-	 
 
 	while(1){
 		if (rt_mb_recv(&mb_b, (rt_uint32_t*)&value, RT_WAITING_FOREVER)== RT_EOK)
@@ -304,18 +300,7 @@ void rt_alarm_process_B_thread_entry(void* parameter)
 					HAL_GPIO_WritePin(GPIOG, LED7_Pin, GPIO_PIN_RESET);               //打开报警LED
 					//HAL_GPIO_WritePin(CTRL_A_GPIO_Port, CTRL_A, GPIO_PIN_SET);        //输出报警开关量
 					
-					rt_mb_send(&mb_alarm, 2);
-//					time_t now;
-//					now = time(RT_NULL);
-					
-					
-//					start_the_time();
-//					fd = open("/alarm.txt", O_WRONLY | O_CREAT | O_APPEND, 0);
-//					write(fd, "abcdefg\n", 8);
-//					close(fd);	
-//					rt_kprintf("time:%d us\n", stop_the_time());	
-					
-					
+					rt_mb_send(&mb_alarm, 2);		
 					
 					info.item8.param1++;        //报警计数+1
 					if(info.item8.active)       //如果lcd当前显示报警计数，更新显示
@@ -404,7 +389,7 @@ void rt_key_thread_entry(void* parameter)
 	}
 }
 
-void alarm_log()
+void alarm_log(void *parameter)
 {
 		int fd, i=1;
 		char *str, buf[100];
@@ -428,9 +413,9 @@ void alarm_log()
 						continue;
 					
 					i++;
-//					fd = open("/alarm.txt", O_WRONLY | O_CREAT | O_APPEND, 0);
-//					write(fd, buf, strlen(buf));
-//					close(fd);
+					fd = open("/alarm.txt", O_WRONLY | O_CREAT | O_APPEND, 0);
+					write(fd, buf, strlen(buf));
+					close(fd);
 			}
 		}
 }

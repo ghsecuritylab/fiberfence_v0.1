@@ -3,12 +3,14 @@
 #include "string.h"
 #include <rtthread.h>
 
+/*****************************************************
+* 定义各按键对应的执行函数
+*****************************************************/
+
 extern int current_display_id;
-
-//extern struct Display_Item alarm_th_item, optic_power_item;
-
 extern struct Display_Info info;
 
+/* 显示一个条目内容 */
 void lcdDisplayItem(struct Display_Item item)
 {
 	LcdCommandWrite(0x01);
@@ -24,6 +26,7 @@ void lcdDisplayItem(struct Display_Item item)
 	delay_ms(1);
 }
 
+/* 显示主窗口 */
 void lcdDisplayMainwindow()
 {
 	LcdCommandWrite(0x01);
@@ -38,6 +41,7 @@ void lcdDisplayMainwindow()
 	delay_ms(1);
 }
 
+/* 执行上翻按键功能 */
 void key_up_press(void)
 {
 	switch(current_display_id)
@@ -119,6 +123,7 @@ void key_up_press(void)
 	}
 }
 
+/* 执行下翻按键功能 */
 void key_down_press(void)
 {
 	switch(current_display_id)
@@ -200,6 +205,7 @@ void key_down_press(void)
 	}
 }
 
+/* 向上调节当前显示参数 */
 void key_plus_press(void)
 {
 	switch(current_display_id)
@@ -231,6 +237,7 @@ void key_plus_press(void)
 	}
 }
 
+/* 向下调节当前显示参数 */
 void key_sub_press(void)
 {
 	switch(current_display_id)
@@ -262,10 +269,11 @@ void key_sub_press(void)
 	}
 }
 
-extern void reset_config();
-extern void save_config();
-extern void load_config();
+extern void reset_config(void);
+extern void save_config(void);
+extern void load_config(void);
 
+/* 确认当前显示操作 */
 void key_enter_press(void)
 {
 	if(current_display_id==9){
@@ -297,6 +305,7 @@ void key_enter_press(void)
 	}
 }
 
+/* 返回显示主窗口 */
 void key_back_perss(void)
 {
 	switch(current_display_id)

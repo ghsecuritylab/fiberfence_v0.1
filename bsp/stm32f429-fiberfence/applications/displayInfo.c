@@ -8,11 +8,11 @@ struct Display_Item alarm_A_th_item, alarm_B_th_item, optic_power_th_item,
 				alarm_time_interval_item,
 				reset_item,
 				save_config_item,
-				load_config_item
-;
+				load_config_item;
 
 struct Display_Info info;
 
+/* 初始化lcd显示内容 */
 void info_init()
 {
 	alarm_A_th_item.active = 0;
@@ -70,5 +70,4 @@ void info_init()
 	info.item9 = reset_item;
 	info.item10 = save_config_item;
 	info.item11 = load_config_item;
-	
 }

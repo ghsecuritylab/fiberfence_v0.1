@@ -2,7 +2,7 @@
 
 uint16_t DB[] = {GPIO_PIN_5,GPIO_PIN_4,GPIO_PIN_3,GPIO_PIN_7,GPIO_PIN_6,GPIO_PIN_5,GPIO_PIN_4,GPIO_PIN_1};
 
-void LcdCommandWrite(int value) 
+void LcdCommandWrite(uint8_t value) 
 {
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(GPIOI, GPIO_PIN_8, GPIO_PIN_RESET);
@@ -11,28 +11,28 @@ void LcdCommandWrite(int value)
 	{
 		switch(i){
 			case 0:
-				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_5, value & 01);
+				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_5, (GPIO_PinState) (value & 0x01));
 				break;
 			case 1:
-				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, value & 01);
+				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, (GPIO_PinState) (value & 0x01));
 				break;
 			case 2:
-				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, value & 01);
+				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, (GPIO_PinState) (value & 0x01));
 				break;
 			case 3:
-				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_7, value & 01);
+				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_7, (GPIO_PinState) (value & 0x01));
 				break;
 			case 4:
-				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_6, value & 01);
+				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_6, (GPIO_PinState) (value & 0x01));
 				break;
 			case 5:
-				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_5, value & 01);
+				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_5, (GPIO_PinState) (value & 0x01));
 				break;
 			case 6:
-				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_4, value & 01);
+				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_4, (GPIO_PinState) (value & 0x01));
 				break;
 			case 7:
-				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, value & 01);
+				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, (GPIO_PinState) (value & 0x01));
 				break;
 			default:
 				break;
@@ -47,7 +47,7 @@ void LcdCommandWrite(int value)
 	delay_us(1);
 }
 
-void LcdDataWrite(int value) 
+void LcdDataWrite(uint8_t value) 
 {
 	int i = 0;
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13, GPIO_PIN_SET);
@@ -56,28 +56,28 @@ void LcdDataWrite(int value)
 	{
 		switch(i){
 			case 0:
-				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_5, value & 01);
+				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_5, (GPIO_PinState) (value & 0x01));
 				break;
 			case 1:
-				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, value & 01);
+				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_4, (GPIO_PinState) (value & 0x01));
 				break;
 			case 2:
-				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, value & 01);
+				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_3, (GPIO_PinState) (value & 0x01));
 				break;
 			case 3:
-				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_7, value & 01);
+				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_7, (GPIO_PinState) (value & 0x01));
 				break;
 			case 4:
-				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_6, value & 01);
+				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_6, (GPIO_PinState) (value & 0x01));
 				break;
 			case 5:
-				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_5, value & 01);
+				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_5, (GPIO_PinState) (value & 0x01));
 				break;
 			case 6:
-				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_4, value & 01);
+				HAL_GPIO_WritePin(GPIOI, GPIO_PIN_4, (GPIO_PinState) (value & 0x01));
 				break;
 			case 7:
-				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, value & 01);
+				HAL_GPIO_WritePin(GPIOE, GPIO_PIN_1, (GPIO_PinState) (value & 0x01));
 				break;
 			default:
 				break;

@@ -93,7 +93,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	uint16_t result;
 	rt_err_t error;
 	
-	if(htim==(&TIM3_Handler))
+	if(htim==(&TIM3_Handler))                     //处理定时器3溢出中断，用于AD采样
 	{
 		//start_the_time();
 		result = ADC_Conversion(CHAN1_CONVERSION);
@@ -140,7 +140,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 	}
 	
 
-	if(htim==(&TIM4_Handler))       //定时器4
+	if(htim==(&TIM4_Handler))                //处理定时器4溢出中断，用于计时
 	{
 			timeout++;
 	}

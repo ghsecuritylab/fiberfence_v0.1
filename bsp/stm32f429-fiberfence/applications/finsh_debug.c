@@ -84,6 +84,13 @@ void sub_version()
 						 RT_VERSION, RT_SUBVERSION, RT_REVISION, __DATE__);
 }
 
+extern int AT24CXX_Write(rt_uint16_t addr,
+                        void *buf,
+                        size_t len);
+extern int AT24CXX_Read(rt_uint16_t addr,
+                        void *buf,
+                        size_t len);
+
 void save_parameter()
 {
 	struct Params P = {2200,
@@ -128,7 +135,6 @@ int get_line(int fd, char *buffer)
 void test_fgets()
 {
 	int fd, length;
-	int	i=0;
 	char buf[128];
 	fd = open("/alarm.txt", O_RDONLY, 0); 
 	if (fd < 0) 
@@ -147,7 +153,7 @@ void test_fgets()
 void save_config()
 {
 	char buf[256];
-	int fd, i, len;
+	int fd, len;
 	fd = open("/config.ini", O_WRONLY | O_CREAT | O_TRUNC, 0);
 	if (fd < 0) 
 	{ 
@@ -160,30 +166,12 @@ void save_config()
 											info.item1.param1, info.item2.param1,
 											info.item3.param1, info.item4.param1);
 	write(fd, buf, len);
-
-//	len=sprintf(buf, "alarm_threshold_A:%d\n", info.item1.param1);
-//	write(fd, buf, len);
-//	len=sprintf(buf, "alarm_threshold_B:%d\n", info.item2.param1);
-//	write(fd, buf, len);
-//	len=sprintf(buf, "optic_power_threshold:%d\n", info.item3.param1);
-//	write(fd, buf, len);
-//	len=sprintf(buf, "alarm_time_interval:%d\n", info.item4.param1);
-//	write(fd, buf, len);
-//	len=sprintf(buf, "optic_Power_A:%d\n", info.item5.param1);
-//	write(fd, buf, len);
-//	len=sprintf(buf, "optic_Power_B:%d\n", info.item6.param1);
-//	write(fd, buf, len);
-//	len=sprintf(buf, "alarm_count_A:%d\n", info.item7.param1);
-//	write(fd, buf, len);
-//	len=sprintf(buf, "alarm_count_B:%d\n", info.item7.param1);
-//	write(fd, buf, len);
 	close(fd);	
 }
 
 void load_config()
 {
 	int fd, length;
-	int	i=0;
 	char buf[128];
 	fd = open("/config.ini", O_RDONLY, 0); 
 	if (fd < 0) 
