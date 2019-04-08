@@ -38,41 +38,43 @@
 //}
 
 
-void arm_iir_f32_init(arm_biquad_casd_df1_inst_f32 *S, uint16_t nS, float32_t * coefs, float32_t *State)
-{
-	arm_biquad_cascade_df1_init_f32(S, nS, coefs, State);
-}
+//void arm_iir_f32_init(arm_biquad_casd_df1_inst_f32 *S, uint16_t nS, float32_t * coefs, float32_t *State)
+//{
+//	arm_biquad_cascade_df1_init_f32(S, nS, coefs, State);
+//}
 
-void arm_iir_f32_lp(arm_biquad_casd_df1_inst_f32 *S, float32_t * in, float32_t *out, uint16_t blockSize, float32_t *scale)
-{
-	uint16_t i,j;
-	float32_t tmp;
-	arm_biquad_cascade_df1_f32(S, in, out, blockSize);
-	for(i=0; i<blockSize; i++){
-		for(j=0; j<S->numStages; j++)
-			tmp*=scale[j];
-		out[i]*=tmp;
-	}
-}
+//void arm_iir_f32_lp(arm_biquad_casd_df1_inst_f32 *S, float32_t * in, float32_t *out, uint16_t blockSize, float32_t *scale)
+//{
+//	uint16_t i,j;
+//	float32_t tmp;
+//	arm_biquad_cascade_df1_f32(S, in, out, blockSize);
+//	for(i=0; i<blockSize; i++){
+//		for(j=0; j<S->numStages; j++)
+//			tmp*=scale[j];
+//		out[i]*=tmp;
+//	}
+//}
 
 
-void median_filter(uint16_t *in, uint16_t *out, uint16_t dlen, uint16_t *s, uint16_t slen, uint16_t tmp)
+void median_filter(uint16_t *in, uint16_t *out, uint16_t dlen, uint16_t *s, uint16_t slen, float32_t *tmp)
 {
 	int i;
+	float32_t temp=*tmp;
 	for(i=0;i<slen;i++)
 	{
-		tmp = tmp-s[i]+in[i];
-		out[i] = ((float)tmp)/slen;
+		temp = temp-s[i]+in[i];
+		out[i] = ((float)temp)/slen;
 	}
 	
 	for(i=slen; i<dlen; i++)
 	{
-		tmp = tmp-in[i-slen]+in[i];
-		out[i] = ((float)tmp)/slen;
+		temp = temp-in[i-slen]+in[i];
+		out[i] = ((float)temp)/slen;
 	}
 	
 	for(i=0;i<slen;i++)
 	{
 		s[i] = in[dlen-slen+i];
 	}
+	*tmp=temp;
 }

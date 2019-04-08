@@ -137,7 +137,7 @@
           </Flash1>
           <bUseTDR>1</bUseTDR>
           <Flash2>BIN\UL2CM3.DLL</Flash2>
-          <Flash3></Flash3>
+          <Flash3>"" ()</Flash3>
           <Flash4></Flash4>
           <pFcarmOut></pFcarmOut>
           <pFcarmGrp></pFcarmGrp>
@@ -310,7 +310,7 @@
           </ArmAdsMisc>
           <Cads>
             <interw>1</interw>
-            <Optim>1</Optim>
+            <Optim>4</Optim>
             <oTime>0</oTime>
             <SplitLS>0</SplitLS>
             <OneElfS>0</OneElfS>
@@ -365,7 +365,7 @@
             <ScatterFile>.\stm32_rom.sct</ScatterFile>
             <IncludeLibs></IncludeLibs>
             <IncludeLibsPath></IncludeLibsPath>
-            <Misc> --keep *.o(.rti_fn.*)   --keep *.o(FSymTab) --keep *.o(VSymTab) </Misc>
+            <Misc>--keep *.o(.rti_fn.*)   --keep *.o(FSymTab) --keep *.o(VSymTab)</Misc>
             <LinkerInputFile></LinkerInputFile>
             <DisabledWarnings></DisabledWarnings>
           </LDads>
@@ -384,11 +384,6 @@
               <FileName>cpuusage.c</FileName>
               <FileType>1</FileType>
               <FilePath>applications\cpuusage.c</FilePath>
-            </File>
-            <File>
-              <FileName>rtgui_demo.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>applications\rtgui_demo.c</FilePath>
             </File>
             <File>
               <FileName>startup.c</FileName>
@@ -459,16 +454,6 @@
               <FileName>drv_sdio_sd.c</FileName>
               <FileType>1</FileType>
               <FilePath>drivers\drv_sdio_sd.c</FilePath>
-            </File>
-            <File>
-              <FileName>lcd.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\drivers\lcd.c</FilePath>
-            </File>
-            <File>
-              <FileName>lcd12864.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>.\drivers\lcd12864.c</FilePath>
             </File>
           </Files>
         </Group>

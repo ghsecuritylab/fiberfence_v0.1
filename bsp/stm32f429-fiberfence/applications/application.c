@@ -27,6 +27,7 @@
 #include "key.h"
 #include "key_app.h"
 #include "udp_demo.h"
+#include "dsp.h"
 
 #include <rtthread.h>
 #include <lwip/netdb.h>
@@ -48,6 +49,20 @@
 #include <netif/ethernetif.h>
 #include "drv_eth.h"
 #endif
+
+#define CMD_HEARTBEAT   0x3001    //心跳包
+#define CMD_ALARM       0x3002  	//报警包
+#define CMD_POWER_LOWER 0x3003    //光功率故障
+
+typedef struct {
+    uint16_t magic;
+    uint16_t cmd;
+    uint16_t device_id;
+    uint16_t zone_id;
+		uint16_t power_flag1;
+		uint16_t power_flag2;
+    char data[512];
+} Cmd_Data;
 
 rt_thread_t tid, tid1, powerid, alarmid_A, alarmid_B, keyid, udp_server_id, alarm_log_id;
 struct rt_timer fresh_timer;
@@ -98,6 +113,41 @@ void udp_send_data(char *send_data, u16 chan)
 		
     lwip_close(sock);
 		rt_free(tmp);
+}
+
+void send_heartbeat(){
+	int len=0;
+		char *send_data;
+		send_data=rt_malloc(1024);
+	
+		Cmd_Data *heart_data;
+		heart_data = (Cmd_Data *)send_data;
+		heart_data->cmd=CMD_HEARTBEAT;
+		heart_data->magic=0x1234;
+		heart_data->device_id=5;
+		heart_data->zone_id = 0;
+	
+		int sock, port=5000;
+    struct hostent *host;
+    struct sockaddr_in server_addr;
+	
+		host = (struct hostent *) gethostbyname("192.168.1.200");
+    if ((sock = socket(AF_INET, SOCK_DGRAM, 0)) == -1)
+    {
+        rt_kprintf("Socket error\n");
+        return;
+    }
+		
+		server_addr.sin_family = AF_INET;
+    server_addr.sin_port = htons(port);
+    server_addr.sin_addr = *((struct in_addr *) host->h_addr);
+    rt_memset(&(server_addr.sin_zero), 0, sizeof(server_addr.sin_zero));
+		
+		len = sendto(sock, (char *)send_data, sizeof(Cmd_Data), 0,
+					 (struct sockaddr *) &server_addr, sizeof(struct sockaddr));
+		rt_kprintf("send len:%d\n", len);
+		lwip_close(sock);
+		rt_free(send_data);
 }
 
 static void timeout1(void* parameter)
@@ -162,6 +212,7 @@ void rt_init_thread_entry(void* parameter)
 			else
 				HAL_GPIO_WritePin(GPIOG, LED14_Pin|CPU_RUN_Pin, GPIO_PIN_RESET);
 				//rt_kprintf("link up\n");
+			send_heartbeat();
 			rt_thread_delay(1000);
 		}
 }
@@ -275,6 +326,8 @@ void rt_alarm_process_A_thread_entry(void* parameter)
 	}
 }
 
+uint16_t out[1000], s[100]={0};
+float32_t tmp_sum=0;
 /*
 *******************防区B报警信号处理**********************
 */
@@ -282,10 +335,13 @@ void rt_alarm_process_B_thread_entry(void* parameter)
 {
 	int i, count=0;
 	rt_uint16_t *value;
+	
 
 	while(1){
 		if (rt_mb_recv(&mb_b, (rt_uint32_t*)&value, RT_WAITING_FOREVER)== RT_EOK)
 		{
+			//median_filter(value, out, 1000, s, 100, &tmp_sum);
+			
 			//等待一个报警时间间隔
 			if(count<20*info.item4.param1){
 				count++;

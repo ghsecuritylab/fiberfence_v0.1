@@ -34,6 +34,11 @@
 #include <rtgui/driver.h>
 #endif
 
+#define DM_ADD (*((volatile unsigned int *) 0x64001000))
+#define DM_ADD1 (*((volatile unsigned int *) 0x64002000))
+
+#define DM_CMD (*((volatile unsigned int *) 0x64002001))
+
 struct rt_ringbuffer *buffer;
 
 void rt_init_thread_entry(void* parameter)
@@ -69,24 +74,32 @@ void rt_init_thread_entry(void* parameter)
         
 #endif /* DFS */
 				
-				lcd1602_init();
-				Lcd_init();
+//				lcd1602_init();
+//				Lcd_init();
 				
 	buffer = rt_ringbuffer_create(50);
+			
+//	int data;
+//	DM_ADD = 0xfeff;
+//	DM_ADD1 = 0x28;
+//	data=DM_CMD;
+//	DM_ADD1 = 0x29;
+//	data=DM_CMD;
+//	DM_ADD1 = 0x2a;
+//	data=DM_CMD;
+//	DM_ADD1 = 0x2b;
+//	data=DM_CMD;
 				
 	//udp_demo_test();
+		while(1){
+			DM_ADD = 0xffff;
+			//rt_kprintf("ON\n");
+			rt_thread_delay(2000);
+			DM_ADD = 0xfdff;
+			//rt_kprintf("OFF\n");
+			rt_thread_delay(2000);
+		}
     
-#ifdef PKG_USING_GUIENGINE
-	{
-		rt_device_t device;
-
-		device = rt_device_find("lcd");
-		/* re-set graphic device */
-		rtgui_graphic_set_device(device);
-        
-        rt_gui_demo_init();
-	}
-#endif
 }
 
 void rt_ringbuffer_produce_entry(void* parameter)
@@ -152,6 +165,8 @@ int rt_application_init()
 
 //    if (consume_tid != RT_NULL)
 //        rt_thread_startup(consume_tid);
+		
+
 
     return 0;
 }
